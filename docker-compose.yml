@@ -9,6 +9,21 @@ services:
     env_file: .env
     volumes: 
       - postgres:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app:/app
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - postgres
+    env_file: .env
 
 volumes:
   postgres:

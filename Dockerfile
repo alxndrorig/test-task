@@ -1,16 +1,39 @@
-FROM node:18.13.0
+# stage 1 building the code
 
-RUN npm install -g yarn
+FROM node:18-alpine as builder
 
+WORKDIR /usr/app
 
-WORKDIR /app
+COPY package*.json ./
+COPY prisma ./prisma/
 
-COPY package.json yarn.lock ./
-
-RUN yarn install --frozen-lockfile
+RUN yarn install
 
 COPY . .
 
+RUN yarn prisma:generate
+
+RUN yarn build
+
+
+
+# stage 2
+
+FROM node:18-alpine
+
+WORKDIR /usr/app  
+
+COPY --from=builder /usr/app/dist ./dist
+
+COPY --from=builder /usr/app/node_modules ./node_modules/
+
+COPY --from=builder /usr/app/package*.json ./
+
+
+COPY .env .
+
+
 EXPOSE 3000
 
-CMD ["yarn", "start"]
+
+CMD node dist/src/main.js
